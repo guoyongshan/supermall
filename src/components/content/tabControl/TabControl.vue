@@ -21,16 +21,18 @@ export default {
       }
     }
   },
-  methods: {
-    itemClick(index) {
-      this.currentIndex = index;
-    }
-  },
   data() {
     return {
       currentIndex: 0
     }
+  },
+  methods: {
+    itemClick(index) {
+      this.currentIndex = index;
+      this.$emit('tabClick', index);
+    }
   }
+
 }
 </script>
 
@@ -41,6 +43,7 @@ export default {
     font-size: 15px;
     height: 40px;
     line-height: 40px;
+    background-color: #fff;
   }
   .tab-control-item {
     flex: 1;
