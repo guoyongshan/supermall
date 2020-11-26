@@ -1,6 +1,6 @@
 <template>
   <div class="goods-item">
-    <img v-bind:src="goodsItem.show.img">
+    <img v-bind:src="goodsItem.show.img" v-on:load="imageLoad">
     <div class="goods-info">
       <p>{{goodsItem.title}}</p>
       <span class="price">{{goodsItem.price}}</span>
@@ -19,6 +19,11 @@ export default {
       default() {
         return {}
       }
+    }
+  },
+  methods: {
+    imageLoad() {
+      this.$bus.$emit('itemImageLoad');
     }
   }
 }
