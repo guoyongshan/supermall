@@ -7,13 +7,14 @@
             v-on:scroll="contentScroll"
             v-bind:pull-up-load="true"
             @pullingUp="loadMore">
-      <home-swiper v-bind:banners="banners" class="home-swiper"></home-swiper>
+      <home-swiper v-bind:banners="banners" class="home-swiper" v-on:swiperImageLoad="swiperImageLoad"></home-swiper>
       <recommend-view v-bind:recommends="recommends"></recommend-view>
       <feature-view></feature-view>
       <tab-control class="tab-control"
                    v-bind:titles="['流行', '新款', '精选']"
                    v-on:tabClick="tabClick"
-                   ref="tabControl"></tab-control>
+                   ref="tabControl"
+                   v-bind:class="{fixed: isTabFixed}"></tab-control>
       <goods-list v-bind:goods="showGoods"></goods-list>
     </scroll>
     <back-top v-on:click.native="backClick" v-show="isShowBackTop"></back-top>
@@ -59,7 +60,9 @@ export default {
         'sell': {page: 0, list: []},
       },
       currentType: 'pop',
-      isShowBackTop: false
+      isShowBackTop: false,
+      tabOffsetTop: 0,
+      isTabFixed: false
     }
   },
   created() {
@@ -79,7 +82,7 @@ export default {
 
     //2.获取tabControl的offsetTop
     //所有组件都有一个属性$el:用于获取组件中的元素
-    console.log(this.$refs.tabControl.$el.offsetTop);
+    //console.log(this.$refs.tabControl.$el.offsetTop);
   },
   computed: {
     showGoods() {
@@ -111,11 +114,18 @@ export default {
     },
     contentScroll(position) {
       //console.log(position);
+      //1.判断backtop是否显示
       this.isShowBackTop = (-position.y) > 1000;
+
+      //2、决定tabcontrol是否吸顶（position:fixed）
+      this.isTabFixed = (-position.y) > this.tabOffsetTop;
     },
     loadMore() {
       //console.log('上啦加载更多');
       this.getHomeGoods(this.currentType);
+    },
+    swiperImageLoad() {
+      this.tabOffsetTop = this.$refs.tabControl.$el.offsetTop;
     },
     /**
      * 网络请求相关的方法
@@ -176,7 +186,12 @@ export default {
   overflow: hidden;
   margin-top: 44px
 }
-
+.fixed {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 44px;
+}
 /*.content {*/
 /*  overflow: hidden;*/
 
