@@ -1,20 +1,24 @@
 <template>
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
+    <tab-control class="tab-control"
+                 v-bind:titles="['流行', '新款', '精选']"
+                 v-on:tabClick="tabClick"
+                 ref="tabControl1"
+                 v-show="isTabFixed"></tab-control>
     <scroll class="content"
             ref="scroll"
             v-bind:probe-type="3"
             v-on:scroll="contentScroll"
             v-bind:pull-up-load="true"
             @pullingUp="loadMore">
-      <home-swiper v-bind:banners="banners" class="home-swiper" v-on:swiperImageLoad="swiperImageLoad"></home-swiper>
+      <home-swiper v-bind:banners="banners" v-on:swiperImageLoad="swiperImageLoad"></home-swiper>
       <recommend-view v-bind:recommends="recommends"></recommend-view>
       <feature-view></feature-view>
       <tab-control class="tab-control"
                    v-bind:titles="['流行', '新款', '精选']"
                    v-on:tabClick="tabClick"
-                   ref="tabControl"
-                   v-bind:class="{fixed: isTabFixed}"></tab-control>
+                   ref="tabControl2"></tab-control>
       <goods-list v-bind:goods="showGoods"></goods-list>
     </scroll>
     <back-top v-on:click.native="backClick" v-show="isShowBackTop"></back-top>
@@ -106,7 +110,10 @@ export default {
           break;
         case 2:
           this.currentType = 'sell'
+          break;
       }
+      this.$refs.tabControl1.currentIndex = index;
+      this.$refs.tabControl2.currentIndex = index;
     },
     backClick() {
       this.$refs.scroll.scrollTo(0, 0, 500);
@@ -125,7 +132,8 @@ export default {
       this.getHomeGoods(this.currentType);
     },
     swiperImageLoad() {
-      this.tabOffsetTop = this.$refs.tabControl.$el.offsetTop;
+      console.log(this.$refs.tabControl2.$el.offsetTop);
+      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop;
     },
     /**
      * 网络请求相关的方法
@@ -164,16 +172,15 @@ export default {
   color: #fff;
   /*padding-bottom: 110px;*/
 
-  position: fixed;
+  /*position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  z-index: 9;
+  z-index: 9;*/
 }
 
 .tab-control {
-  position: -webkit-sticky;
-  top: 44px;
+  position: relative;
   z-index: 9;
 }
 .home-swiper {
@@ -181,17 +188,21 @@ export default {
 }
 
 .content {
-  position: absolute;
-  height: calc(100% - 93px);
   overflow: hidden;
-  margin-top: 44px
+  position: absolute;
+  /*//height: calc(100% - 93px);*/
+
+  top: 44px;
+  bottom: 49px;
+  left: 0;
+  right: 0;
 }
-.fixed {
+/*.fixed {
   position: fixed;
   left: 0;
   right: 0;
   top: 44px;
-}
+}*/
 /*.content {*/
 /*  overflow: hidden;*/
 
