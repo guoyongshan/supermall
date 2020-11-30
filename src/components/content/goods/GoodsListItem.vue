@@ -1,5 +1,5 @@
 <template>
-  <div class="goods-item">
+  <div class="goods-item" v-on:click="itemClick">
     <img v-bind:src="goodsItem.show.img" v-on:load="imageLoad">
     <div class="goods-info">
       <p>{{goodsItem.title}}</p>
@@ -24,6 +24,10 @@ export default {
   methods: {
     imageLoad() {
       this.$bus.$emit('itemImageLoad');
+    },
+    itemClick() {
+      this.$router.push('/detail/' + this.goodsItem.iid);
+      //console.log('跳转到详情页');
     }
   }
 }
