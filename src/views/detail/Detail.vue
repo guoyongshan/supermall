@@ -1,9 +1,16 @@
 <template>
   <div id="detail">
-    <detail-nav-bar></detail-nav-bar>
-    <detail-swiper v-bind:top-images="topImages"></detail-swiper>
-    <detail-base-info v-bind:goods="goods"></detail-base-info>
-    <detail-shop-info v-bind:shop="shop"></detail-shop-info>
+    <detail-nav-bar class="detail-nav" v-on:titleClick="titleClick" ref="nav"></detail-nav-bar>
+    <scroll class="content" ref="scroll" v-bind:probe-type="3" v-on:scroll="contentScroll">
+      <detail-swiper v-bind:top-images="topImages"></detail-swiper>
+      <detail-base-info v-bind:goods="goods"></detail-base-info>
+      <detail-shop-info v-bind:shop="shop"></detail-shop-info>
+      <detail-goods-info v-bind:detail-info="detailInfo" v-on:imageLoad="imageLoad"></detail-goods-info>
+      <detail-param-info ref="params" v-bind:param-info="paramInfo"></detail-param-info>
+      <detail-comment-info ref="comment" v-bind:comment-info="commentInfo"></detail-comment-info>
+      <goods-list ref="recommend" v-bind:goods="recommends"></goods-list>
+    </scroll>
+    <detail-tobbom-bar></detail-tobbom-bar>
   </div>
 </template>
 
@@ -14,8 +21,16 @@
   import DetailShopInfo from "./childComps/DetailShopInfo";
   import DetailGoodsInfo from "./childComps/DetailGoodsInfo";
   import DetailParamInfo from "./childComps/DetailParamInfo";
+  import DetailCommentInfo from "./childComps/DetailCommentInfo";
+  import DetailBottonBar from "./childComps/DetailBottonBar";
 
-  import {getDetail, Goods, Shop} from "../../network/detail";
+  import Scroll from "../../components/common/scroll/Scroll";
+  import GoodsList from "../../components/content/goods/GoodsList";
+
+  import {getDetail, getRecommend, Goods, GoodsParam, Shop} from "../../network/detail";
+
+  import {itemListenerMixin} from "../../common/mixin";
+  import {debounce} from "../../common/utils";
 
   export default {
     name: "Detail",
@@ -26,14 +41,25 @@
       DetailBaseInfo,
       DetailShopInfo,
       DetailGoodsInfo,
-      DetailParamInfo
+      DetailParamInfo,
+      DetailCommentInfo,
+      DetailBottonBar,
+      Scroll,
+      GoodsList
     },
     data() {
       return {
         iid: null,
         topImages: [],
         goods: {},
-        shop: {}
+        shop: {},
+        detailInfo: {},
+        paramInfo: {},
+        commentInfo: {},
+        recommends: [],
+        themeTopYs: [],
+        getThemeTopY: null,
+        currentIndex: 0
       }
     },
     created() {
@@ -43,7 +69,7 @@
       //2、根据iid请求详情数据
       getDetail(this.iid).then(res => {
         //1.获取顶部的轮播图数据
-        console.log(res);
+        //console.log(res);
         const data = res.result;
         this.topImages = data.itemInfo.topImages;
         //2.获取商品数据
@@ -51,11 +77,99 @@
 
         //3.创建店铺信息对象
         this.shop = new Shop(data.shopInfo);
-      })
+
+        //4.保存商品详情数据
+        this.detailInfo = data.detailInfo;
+
+        //5.获取参数信息
+        this.paramInfo = new GoodsParam(data.itemParams.info, data.itemParams.rule);
+
+        //6.取出评论的信息
+        if (data.rate.cRate !== 0) {
+          this.commentInfo = data.rate.list[0];
+        }
+
+        this.$nextTick(() => {
+          this.themeTopYs.push(0);
+          this.themeTopYs.push(this.$refs.params.$el.offsetTop);//参数的offsetTop
+          this.themeTopYs.push(this.$refs.comment.$el.offsetTop);//评论的offsetTop
+          this.themeTopYs.push(this.$refs.recommend.$el.offsetTop);//推荐的offsetTop
+
+          console.log(this.themeTopYs);
+        });
+
+
+
+      });
+
+      //3.请求推荐数据
+      getRecommend().then(res => {
+        //console.log(res.data.list);
+        this.recommends = res.data.list;
+      });
+      //4.给getThemeTopY赋值，（对给this.ThemeTopY赋值的操作进行防抖）
+      this.getThemeTopY = debounce(() => {
+        this.themeTopYs = [];
+        this.themeTopYs.push(0);
+        this.themeTopYs.push(this.$refs.params.$el.offsetTop-44);//参数的offsetTop
+        this.themeTopYs.push(this.$refs.comment.$el.offsetTop-44);//评论的offsetTop
+        this.themeTopYs.push(this.$refs.recommend.$el.offsetTop-44);//推荐的offsetTop
+
+        console.log(this.themeTopYs);
+      }, 200)
+    },
+    methods: {
+      imageLoad() {
+        this.refresh();
+        //this.$refs.scroll.refresh();
+
+        this.getThemeTopY();
+      },
+      titleClick(index) {
+        //console.log(index);
+        this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 200);
+      },
+      contentScroll(position) {
+        const positionY = -position.y;
+        let lenght = this.themeTopYs.length;
+        for(let i = 0; i < lenght; i++) {
+          if(this.currentIndex !== i && ((i < lenght - 1 && positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i+1]) ||
+            (i === lenght - 1 && positionY >= this.themeTopYs[i]))) {
+
+            this.currentIndex = i;
+            //console.log(this.currentIndex);
+            this.$refs.nav.currentIndex = this.currentIndex;
+          }
+        }
+
+      }
+    },
+    mixins: [itemListenerMixin],
+    mounted() {
+
+    },
+    destroyed() {
+      this.$bus.$off('itemImageLoad', this.itemImgListener)
     }
   }
 </script>
 
 <style scoped>
+  #detail {
+    position: relative;
+    z-index: 99;
+    background-color: #fff;
+    height: 100vh;
+    overflow: hidden;
+  }
 
+  .content {
+    height: calc(100% - 44px);
+  }
+
+  .detail-nav {
+    position: relative;
+    z-index: 9;
+    background-color: #fff;
+  }
 </style>

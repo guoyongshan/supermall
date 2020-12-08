@@ -38,7 +38,7 @@ import Scroll from "@/components/common/scroll/Scroll";
 import BackTop from '@/components/content/backTop/BackTop';
 
 import {getHomeMultidata, getHomeGoods} from "@/network/home";
-import {debounce} from "@/common/utils";
+import {itemListenerMixin} from "../../common/mixin";
 
 
 export default {
@@ -70,6 +70,7 @@ export default {
       saveY: 0
     }
   },
+  mixins: [itemListenerMixin],
   created() {
     //1.请求多个数据
     this.getHomeMultidata()
@@ -79,15 +80,7 @@ export default {
     this.getHomeGoods('sell')
   },
   mounted() {
-    //3.监听item中图片加载完成,计算生成最外层div的高度 //1、图片加载完成的事件监听
-    const refresh = debounce(this.$refs.scroll.refresh, 200);
-    this.$bus.$on('itemImageLoad', () => {
-      refresh();
-    });
 
-    //2.获取tabControl的offsetTop
-    //所有组件都有一个属性$el:用于获取组件中的元素
-    //console.log(this.$refs.tabControl.$el.offsetTop);
   },
   computed: {
     showGoods() {
@@ -102,7 +95,11 @@ export default {
     this.$refs.scroll.refresh();
   },
   deactivated() {
+    //1.保存Y值
     this.saveY = this.$refs.scroll.scroll.y;
+
+    //2.取消全局事件监听
+    this.$bus.$off('itemImgLoad', this.itemImgListener)
   },
   methods: {
     /**
@@ -121,8 +118,11 @@ export default {
           this.currentType = 'sell'
           break;
       }
-      this.$refs.tabControl1.currentIndex = index;
-      this.$refs.tabControl2.currentIndex = index;
+      if(this.$refs.tabControl1 !== null) {
+        this.$refs.tabControl1.currentIndex = index;
+        this.$refs.tabControl2.currentIndex = index;
+      }
+
     },
     backClick() {
       this.$refs.scroll.scrollTo(0, 0, 500);
