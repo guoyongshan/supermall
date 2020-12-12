@@ -10,7 +10,8 @@
       <detail-comment-info ref="comment" v-bind:comment-info="commentInfo"></detail-comment-info>
       <goods-list ref="recommend" v-bind:goods="recommends"></goods-list>
     </scroll>
-    <detail-tobbom-bar></detail-tobbom-bar>
+    <detail-botton-bar v-on:addToCart="addToCart"/>
+    <back-top v-on:click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -29,7 +30,7 @@
 
   import {getDetail, getRecommend, Goods, GoodsParam, Shop} from "../../network/detail";
 
-  import {itemListenerMixin} from "../../common/mixin";
+  import {itemListenerMixin, backTopMixin} from "../../common/mixin";
   import {debounce} from "../../common/utils";
 
   export default {
@@ -95,7 +96,7 @@
           this.themeTopYs.push(this.$refs.comment.$el.offsetTop);//评论的offsetTop
           this.themeTopYs.push(this.$refs.recommend.$el.offsetTop);//推荐的offsetTop
 
-          console.log(this.themeTopYs);
+          //console.log(this.themeTopYs);
         });
 
 
@@ -119,6 +120,20 @@
       }, 200)
     },
     methods: {
+      addToCart() {
+        //1.获取购物车需要展示的信息
+        const product = {};
+        product.image = this.topImages[0];
+        product.title = this.goods.title;
+        product.desc = this.goods.desc;
+        product.price = this.goods.realPrice;
+        product.iid = this.iid;
+
+        //2.将商品添加到购物车里
+        //this.$store.cartList.push(product);
+        this.$store.dispatch('addCart', product);
+
+      },
       imageLoad() {
         this.refresh();
         //this.$refs.scroll.refresh();
@@ -130,7 +145,10 @@
         this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 200);
       },
       contentScroll(position) {
+        //1.获取y值
         const positionY = -position.y;
+
+        //2.positionY和主题中值进行对比
         let lenght = this.themeTopYs.length;
         for(let i = 0; i < lenght; i++) {
           if(this.currentIndex !== i && ((i < lenght - 1 && positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i+1]) ||
@@ -142,9 +160,11 @@
           }
         }
 
+        //3.判断backtop是否显示
+        this.listenShoBackTop(position);
       }
     },
-    mixins: [itemListenerMixin],
+    mixins: [itemListenerMixin, backTopMixin],
     mounted() {
 
     },
@@ -164,7 +184,7 @@
   }
 
   .content {
-    height: calc(100% - 44px);
+    height: calc(100% - 44px - 49px);
   }
 
   .detail-nav {
