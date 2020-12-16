@@ -12,6 +12,7 @@
     </scroll>
     <detail-botton-bar v-on:addToCart="addToCart"/>
     <back-top v-on:click.native="backClick" v-show="isShowBackTop"></back-top>
+<!--    <toast v-bind:message="message" v-bind:show="show"/>-->
   </div>
 </template>
 
@@ -24,6 +25,7 @@
   import DetailParamInfo from "./childComps/DetailParamInfo";
   import DetailCommentInfo from "./childComps/DetailCommentInfo";
   import DetailBottonBar from "./childComps/DetailBottonBar";
+  // import Toast from "../../components/common/toast/Toast";
 
   import Scroll from "../../components/common/scroll/Scroll";
   import GoodsList from "../../components/content/goods/GoodsList";
@@ -32,6 +34,8 @@
 
   import {itemListenerMixin, backTopMixin} from "../../common/mixin";
   import {debounce} from "../../common/utils";
+
+  import { mapActions } from 'vuex';
 
   export default {
     name: "Detail",
@@ -46,7 +50,8 @@
       DetailCommentInfo,
       DetailBottonBar,
       Scroll,
-      GoodsList
+      GoodsList,
+      // Toast
     },
     data() {
       return {
@@ -60,7 +65,9 @@
         recommends: [],
         themeTopYs: [],
         getThemeTopY: null,
-        currentIndex: 0
+        currentIndex: 0,
+        // message: '',
+        // show: false
       }
     },
     created() {
@@ -120,6 +127,10 @@
       }, 200)
     },
     methods: {
+      ...mapActions({
+        add: 'addCart'
+      }),
+
       addToCart() {
         //1.获取购物车需要展示的信息
         const product = {};
@@ -130,8 +141,20 @@
         product.iid = this.iid;
 
         //2.将商品添加到购物车里
+        this.add(product).then(res => {
+          // this.message = res;
+          // this.show = true;
+          //
+          // setTimeout(() => {
+          //   this.message = '';
+          //   this.show = false;
+          // }, 1500)
+
+          this.$toast.show(res, 2000);
+        });
+
         //this.$store.cartList.push(product);
-        this.$store.dispatch('addCart', product);
+        //this.$store.dispatch('addCart', product).then(res => console.log(res));不通过mapActions
 
       },
       imageLoad() {
